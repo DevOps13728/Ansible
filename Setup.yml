@@ -1,0 +1,70 @@
+---
+- name: Manage Ubuntu EC2 nodes
+  hosts: all
+  become: true  # Use sudo for privileged tasks
+
+  tasks:
+
+    # Update apt repository and upgrade installed packages
+    - name: Update apt repository cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600  # Keep cache valid for 1 hour
+
+    - name: Upgrade all packages to the latest version
+      apt:
+        upgrade: dist
+
+    # Install common utilities
+    - name: Install basic utilities
+      apt:
+        name:
+          - vim
+          - curl
+          - git
+        state: present
+
+    # Install Apache HTTP Server
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
+
+    # Ensure Apache is started and enabled on boot
+    - name: Start and enable Apache2 service
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    # Add a new user
+    - name: Create a new user
+      user:
+        name: deploy
+        shell: /bin/bash
+        state: present
+
+    # Create a directory for a user (example: /home/deploy/www)
+    - name: Create directory for deploy user
+      file:
+        path: /home/deploy/www
+        state: directory
+        owner: deploy
+        group: deploy
+        mode: '0755'
+
+    # Copy a custom index.html to Apache's web directory
+    - name: Copy custom index.html
+      copy:
+        src: ./index.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+
+    # Set up the firewall (UFW) to allow HTTP traffic
+    - name: Allow Apache through the firewall
+      ufw:
+        rule: allow
+        name: 'Apache'
+        state: enabled

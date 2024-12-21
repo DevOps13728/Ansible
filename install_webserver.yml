@@ -1,0 +1,22 @@
+---
+- name: Install Nginx on EC2
+  hosts: webServers
+  become: yes
+  tasks:
+    - name: Install Nginx
+      package:
+        name: nginx
+        state: present
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Allow HTTP traffic (for Ubuntu)
+      ufw:
+        rule: allow
+        name: 'Nginx Full'
+      when: ansible_os_family == "Debian"
+
